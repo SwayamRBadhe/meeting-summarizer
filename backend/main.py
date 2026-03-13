@@ -1,10 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers import upload, summary, chat, metrics
 
-# Create FastAPI app
 app = FastAPI(title="AI Meeting Summarizer")
 
-# Allow React frontend to talk to this backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -13,7 +12,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Simple test route
+app.include_router(upload.router,  prefix="/api")
+app.include_router(summary.router, prefix="/api")
+app.include_router(chat.router,    prefix="/api")
+app.include_router(metrics.router, prefix="/api")
+
 @app.get("/")
 def home():
     return {"message": "AI Meeting Summarizer is running!"}
