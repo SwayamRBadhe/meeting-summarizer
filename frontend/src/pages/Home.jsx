@@ -4,13 +4,19 @@ import API from '../api/axiosConfig';
 
 function Home() {
   const [transcript, setTranscript] = useState('');
+  const [audioFile, setAudioFile] = useState(null);
+  const [inputType, setInputType] = useState('text');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (!transcript.trim()) {
+    if (inputType === 'text' && !transcript.trim()) {
       setError('Please enter a transcript');
+      return;
+    }
+    if (inputType === 'audio' && !audioFile) {
+      setError('Please select an audio file');
       return;
     }
 
@@ -18,15 +24,16 @@ function Home() {
     setError('');
 
     try {
-      // Create form data
       const formData = new FormData();
-      formData.append('transcript', transcript);
 
-      // Upload transcript
+      if (inputType === 'audio') {
+        formData.append('file', audioFile);
+      } else {
+        formData.append('transcript', transcript);
+      }
+
       const response = await API.post('/upload', formData);
       const sessionId = response.data.session_id;
-
-      // Go to results page
       navigate(`/results/${sessionId}`);
 
     } catch (err) {
@@ -41,16 +48,55 @@ function Home() {
     <div style={styles.container}>
       <h1 style={styles.title}>🎙️ AI Meeting Summarizer</h1>
       <p style={styles.subtitle}>
-        Paste your meeting transcript and get an instant AI summary
+        Upload audio or paste transcript to get an AI summary
       </p>
 
-      <textarea
-        style={styles.textarea}
-        placeholder="Paste your meeting transcript here..."
-        value={transcript}
-        onChange={(e) => setTranscript(e.target.value)}
-        rows={12}
-      />
+      {/* Toggle buttons */}
+      <div style={styles.toggleContainer}>
+        <button
+          style={inputType === 'text' ? styles.toggleActive : styles.toggle}
+          onClick={() => setInputType('text')}
+        >
+          📝 Paste Transcript
+        </button>
+        <button
+          style={inputType === 'audio' ? styles.toggleActive : styles.toggle}
+          onClick={() => setInputType('audio')}
+        >
+          🎵 Upload Audio
+        </button>
+      </div>
+
+      {/* Text input */}
+      {inputType === 'text' && (
+        <textarea
+          style={styles.textarea}
+          placeholder="Paste your meeting transcript here..."
+          value={transcript}
+          onChange={(e) => setTranscript(e.target.value)}
+          rows={12}
+        />
+      )}
+
+      {/* Audio input */}
+      {inputType === 'audio' && (
+        <div style={styles.audioContainer}>
+          <input
+            type="file"
+            accept=".mp3,.wav,.m4a"
+            onChange={(e) => setAudioFile(e.target.files[0])}
+            style={styles.fileInput}
+          />
+          {audioFile && (
+            <p style={styles.fileName}>
+              ✅ Selected: {audioFile.name}
+            </p>
+          )}
+          <p style={styles.audioNote}>
+            Supported formats: .mp3, .wav, .m4a
+          </p>
+        </div>
+      )}
 
       {error && <p style={styles.error}>{error}</p>}
 
@@ -59,7 +105,7 @@ function Home() {
         onClick={handleSubmit}
         disabled={loading}
       >
-        {loading ? 'Processing...' : 'Generate Summary'}
+        {loading ? 'Processing... (may take a minute for audio)' : 'Generate Summary'}
       </button>
     </div>
   );
@@ -80,7 +126,31 @@ const styles = {
   subtitle: {
     textAlign: 'center',
     color: '#666',
-    marginBottom: '30px',
+    marginBottom: '20px',
+  },
+  toggleContainer: {
+    display: 'flex',
+    gap: '10px',
+    marginBottom: '20px',
+  },
+  toggle: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#eee',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+  },
+  toggleActive: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1rem',
   },
   textarea: {
     width: '100%',
@@ -90,6 +160,25 @@ const styles = {
     border: '1px solid #ddd',
     resize: 'vertical',
     boxSizing: 'border-box',
+  },
+  audioContainer: {
+    padding: '30px',
+    border: '2px dashed #ddd',
+    borderRadius: '8px',
+    textAlign: 'center',
+    marginBottom: '10px',
+  },
+  fileInput: {
+    fontSize: '1rem',
+    marginBottom: '10px',
+  },
+  fileName: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  audioNote: {
+    color: '#999',
+    fontSize: '0.9rem',
   },
   button: {
     width: '100%',
