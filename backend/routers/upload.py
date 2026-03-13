@@ -1,9 +1,12 @@
+import os
+# Tell Whisper where ffmpeg is on Windows
+os.environ["PATH"] += os.pathsep + r"C:\ProgramData\chocolatey\bin"
 from fastapi import APIRouter, UploadFile, File, Form
 from services.preprocessing import clean_text
 from services.ml_classifier import classify_segments
 from services.vector_store import store_in_chromadb
 import uuid
-import os
+
 
 router = APIRouter()
 
