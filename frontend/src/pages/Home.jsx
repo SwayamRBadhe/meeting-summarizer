@@ -19,114 +19,161 @@ function Home() {
       setError('Please select an audio file');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
       const formData = new FormData();
-
       if (inputType === 'audio') {
         formData.append('file', audioFile);
       } else {
         formData.append('transcript', transcript);
       }
-
       const response = await API.post('/upload', formData);
-      const sessionId = response.data.session_id;
-      navigate(`/results/${sessionId}`);
-
+      navigate(`/results/${response.data.session_id}`);
     } catch (err) {
       setError('Something went wrong. Please try again.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>🎙️ AI Meeting Summarizer</h1>
-      <p style={styles.subtitle}>
-        Upload audio or paste transcript to get an AI summary
-      </p>
+    <div style={styles.page}>
+      {/* Navbar */}
+      <nav style={styles.navbar}>
+        <span style={styles.logo}>🎙️ MeetingAI</span>
+      </nav>
 
-      {/* Toggle buttons */}
-      <div style={styles.toggleContainer}>
+      {/* Hero */}
+      <div style={styles.hero}>
+        <h1 style={styles.heroTitle}>AI Meeting Summarizer</h1>
+        <p style={styles.heroSubtitle}>
+          Transform your meetings into structured summaries, 
+          action items and insights — powered by AI
+        </p>
+      </div>
+
+      {/* Main Card */}
+      <div style={styles.card}>
+
+        {/* Toggle */}
+        <div style={styles.toggleContainer}>
+          <button
+            style={inputType === 'text' ? styles.toggleActive : styles.toggle}
+            onClick={() => setInputType('text')}
+          >
+            📝 Paste Transcript
+          </button>
+          <button
+            style={inputType === 'audio' ? styles.toggleActive : styles.toggle}
+            onClick={() => setInputType('audio')}
+          >
+            🎵 Upload Audio
+          </button>
+        </div>
+
+        {/* Text Input */}
+        {inputType === 'text' && (
+          <textarea
+            style={styles.textarea}
+            placeholder="Paste your meeting transcript here..."
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            rows={10}
+          />
+        )}
+
+        {/* Audio Input */}
+        {inputType === 'audio' && (
+          <div style={styles.audioBox}>
+            <p style={styles.audioIcon}>🎵</p>
+            <p style={styles.audioText}>Select your audio file</p>
+            <input
+              type="file"
+              accept=".mp3,.wav,.m4a"
+              onChange={(e) => setAudioFile(e.target.files[0])}
+              style={styles.fileInput}
+            />
+            {audioFile && (
+              <p style={styles.fileName}>✅ {audioFile.name}</p>
+            )}
+            <p style={styles.audioNote}>Supports .mp3, .wav, .m4a</p>
+          </div>
+        )}
+
+        {error && <p style={styles.error}>⚠️ {error}</p>}
+
         <button
-          style={inputType === 'text' ? styles.toggleActive : styles.toggle}
-          onClick={() => setInputType('text')}
+          style={loading ? styles.buttonDisabled : styles.button}
+          onClick={handleSubmit}
+          disabled={loading}
         >
-          📝 Paste Transcript
-        </button>
-        <button
-          style={inputType === 'audio' ? styles.toggleActive : styles.toggle}
-          onClick={() => setInputType('audio')}
-        >
-          🎵 Upload Audio
+          {loading ? '⏳ Processing...' : '✨ Generate Summary'}
         </button>
       </div>
 
-      {/* Text input */}
-      {inputType === 'text' && (
-        <textarea
-          style={styles.textarea}
-          placeholder="Paste your meeting transcript here..."
-          value={transcript}
-          onChange={(e) => setTranscript(e.target.value)}
-          rows={12}
-        />
-      )}
-
-      {/* Audio input */}
-      {inputType === 'audio' && (
-        <div style={styles.audioContainer}>
-          <input
-            type="file"
-            accept=".mp3,.wav,.m4a"
-            onChange={(e) => setAudioFile(e.target.files[0])}
-            style={styles.fileInput}
-          />
-          {audioFile && (
-            <p style={styles.fileName}>
-              ✅ Selected: {audioFile.name}
-            </p>
-          )}
-          <p style={styles.audioNote}>
-            Supported formats: .mp3, .wav, .m4a
-          </p>
-        </div>
-      )}
-
-      {error && <p style={styles.error}>{error}</p>}
-
-      <button
-        style={loading ? styles.buttonDisabled : styles.button}
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? 'Processing... (may take a minute for audio)' : 'Generate Summary'}
-      </button>
+      {/* Features */}
+      <div style={styles.featuresContainer}>
+        {[
+          { icon: '🤖', title: 'AI Powered', desc: 'Groq LLaMA 3.1 generates accurate summaries' },
+          { icon: '🔍', title: 'RAG Pipeline', desc: 'ChromaDB vector search for context-aware Q&A' },
+          { icon: '🎙️', title: 'Audio Support', desc: 'Whisper transcribes audio in under 1 minute' },
+        ].map((f, i) => (
+          <div key={i} style={styles.featureCard}>
+            <p style={styles.featureIcon}>{f.icon}</p>
+            <h3 style={styles.featureTitle}>{f.title}</h3>
+            <p style={styles.featureDesc}>{f.desc}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 const styles = {
-  container: {
-    maxWidth: '800px',
-    margin: '50px auto',
+  page: {
+    minHeight: '100vh',
+    backgroundColor: '#0f0f0f',
+    color: '#ffffff',
+    fontFamily: "'Segoe UI', sans-serif",
+  },
+  navbar: {
+    padding: '20px 40px',
+    borderBottom: '1px solid #222',
+    backgroundColor: '#111',
+  },
+  logo: {
+    fontSize: '1.4rem',
+    fontWeight: 'bold',
+    color: '#7c3aed',
+  },
+  hero: {
+    textAlign: 'center',
+    padding: '60px 20px 30px',
+  },
+  heroTitle: {
+    fontSize: '2.8rem',
+    fontWeight: 'bold',
+    background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    marginBottom: '15px',
+  },
+  heroSubtitle: {
+    fontSize: '1.1rem',
+    color: '#888',
+    maxWidth: '500px',
+    margin: '0 auto',
+    lineHeight: '1.6',
+  },
+  card: {
+    maxWidth: '700px',
+    margin: '30px auto',
+    backgroundColor: '#1a1a1a',
+    borderRadius: '16px',
     padding: '30px',
-    fontFamily: 'Arial, sans-serif',
-  },
-  title: {
-    fontSize: '2rem',
-    textAlign: 'center',
-    color: '#333',
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: '#666',
-    marginBottom: '20px',
+    border: '1px solid #222',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
   },
   toggleContainer: {
     display: 'flex',
@@ -136,75 +183,123 @@ const styles = {
   toggle: {
     flex: 1,
     padding: '12px',
-    backgroundColor: '#eee',
-    border: 'none',
+    backgroundColor: '#222',
+    color: '#888',
+    border: '1px solid #333',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '1rem',
+    fontSize: '0.95rem',
   },
   toggleActive: {
     flex: 1,
     padding: '12px',
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#7c3aed',
     color: 'white',
-    border: 'none',
+    border: '1px solid #7c3aed',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '1rem',
+    fontSize: '0.95rem',
   },
   textarea: {
     width: '100%',
     padding: '15px',
-    fontSize: '1rem',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
+    fontSize: '0.95rem',
+    borderRadius: '10px',
+    border: '1px solid #333',
+    backgroundColor: '#111',
+    color: '#fff',
     resize: 'vertical',
     boxSizing: 'border-box',
+    outline: 'none',
+    lineHeight: '1.6',
   },
-  audioContainer: {
-    padding: '30px',
-    border: '2px dashed #ddd',
-    borderRadius: '8px',
+  audioBox: {
+    border: '2px dashed #333',
+    borderRadius: '10px',
+    padding: '40px',
     textAlign: 'center',
+    backgroundColor: '#111',
     marginBottom: '10px',
   },
+  audioIcon: {
+    fontSize: '2.5rem',
+    marginBottom: '10px',
+  },
+  audioText: {
+    color: '#888',
+    marginBottom: '15px',
+  },
   fileInput: {
-    fontSize: '1rem',
+    color: '#fff',
     marginBottom: '10px',
   },
   fileName: {
-    color: '#4CAF50',
+    color: '#7c3aed',
     fontWeight: 'bold',
+    marginTop: '10px',
   },
   audioNote: {
-    color: '#999',
-    fontSize: '0.9rem',
+    color: '#555',
+    fontSize: '0.85rem',
+    marginTop: '8px',
   },
   button: {
     width: '100%',
     padding: '15px',
-    marginTop: '15px',
-    backgroundColor: '#4CAF50',
+    marginTop: '20px',
+    background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
     color: 'white',
     fontSize: '1rem',
+    fontWeight: 'bold',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
   },
   buttonDisabled: {
     width: '100%',
     padding: '15px',
-    marginTop: '15px',
-    backgroundColor: '#aaa',
-    color: 'white',
+    marginTop: '20px',
+    backgroundColor: '#333',
+    color: '#666',
     fontSize: '1rem',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'not-allowed',
   },
   error: {
-    color: 'red',
+    color: '#ef4444',
     marginTop: '10px',
+    fontSize: '0.9rem',
+  },
+  featuresContainer: {
+    display: 'flex',
+    gap: '20px',
+    maxWidth: '700px',
+    margin: '0 auto 50px',
+    padding: '0 20px',
+  },
+  featureCard: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    borderRadius: '12px',
+    padding: '20px',
+    border: '1px solid #222',
+    textAlign: 'center',
+  },
+  featureIcon: {
+    fontSize: '2rem',
+    marginBottom: '10px',
+  },
+  featureTitle: {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: '8px',
+  },
+  featureDesc: {
+    fontSize: '0.85rem',
+    color: '#666',
+    lineHeight: '1.5',
   },
 };
 
